@@ -76,7 +76,7 @@ For a host installation, copy both binaries to `/usr/local/bin/` and install `de
 - The project does not connect to radios, antennas, switches, routers, classified systems, or live operational networks.
 - The protocol is project-specific and is not presented as 3GPP, ETSI, or defence-system compliance.
 
-See [protocol.md](docs/protocol.md), [architecture.md](docs/architecture.md), [security.md](docs/security.md), and [requirements-traceability.md](docs/requirements-traceability.md) for review evidence.
+See [protocol.md](docs/protocol.md), [architecture.md](docs/architecture.md), [security.md](docs/security.md), [requirements-traceability.md](docs/requirements-traceability.md), and [verification.md](docs/verification.md) for review evidence.
 
 ## License
 
