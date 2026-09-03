@@ -83,13 +83,13 @@ int main() {
         }},
         {"reject_invalid_decoded_metrics", [] {
             auto frequency = radio_link::encode_frame(nominal());
-            std::fill(frequency.begin() + 24, frequency.begin() + 32, 0);
+            std::fill(frequency.begin() + 24, frequency.begin() + 32, std::uint8_t{0});
             refresh_checksum(frequency);
             require(radio_link::decode_frame(frequency).error == radio_link::DecodeError::invalid_metric,
                     "zero frequency decoded");
 
             auto bandwidth = radio_link::encode_frame(nominal());
-            std::fill(bandwidth.begin() + 32, bandwidth.begin() + 36, 0);
+            std::fill(bandwidth.begin() + 32, bandwidth.begin() + 36, std::uint8_t{0});
             refresh_checksum(bandwidth);
             require(radio_link::decode_frame(bandwidth).error == radio_link::DecodeError::invalid_metric,
                     "zero bandwidth decoded");
