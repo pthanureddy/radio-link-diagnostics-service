@@ -3,6 +3,7 @@
 #include "radio_link/link_analyzer.hpp"
 #include "radio_link/udp_socket.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <iostream>
@@ -21,6 +22,16 @@ radio_link::RadioLinkFrame nominal(std::uint32_t sequence = 1, std::uint32_t sen
 
 void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
+}
+
+void refresh_checksum(std::vector<std::uint8_t>& bytes) {
+    const auto checksum = radio_link::crc32(
+        std::span(bytes.data(), bytes.size() - sizeof(std::uint32_t)));
+    for (std::size_t index = 0; index < sizeof(checksum); ++index) {
+        const auto shift = static_cast<unsigned>((sizeof(checksum) - index - 1U) * 8U);
+        bytes[bytes.size() - sizeof(checksum) + index] =
+            static_cast<std::uint8_t>((checksum >> shift) & 0xFFU);
+    }
 }
 
 template <typename Function>
@@ -63,8 +74,32 @@ int main() {
             require(radio_link::decode_frame(bytes).error == radio_link::DecodeError::checksum_mismatch, "corruption not rejected");
         }},
         {"reject_invalid_encode_metrics", [] {
-            auto frame = nominal(); frame.bandwidth_hz = 0;
-            require_throws([&] { (void)radio_link::encode_frame(frame); }, "invalid metric encoded");
+            auto frequency = nominal(); frequency.center_frequency_hz = 0;
+            require_throws([&] { (void)radio_link::encode_frame(frequency); }, "zero frequency encoded");
+            auto bandwidth = nominal(); bandwidth.bandwidth_hz = 0;
+            require_throws([&] { (void)radio_link::encode_frame(bandwidth); }, "zero bandwidth encoded");
+            auto evm = nominal(); evm.evm_x1000 = 1001;
+            require_throws([&] { (void)radio_link::encode_frame(evm); }, "out-of-range EVM encoded");
+        }},
+        {"reject_invalid_decoded_metrics", [] {
+            auto frequency = radio_link::encode_frame(nominal());
+            std::fill(frequency.begin() + 24, frequency.begin() + 32, 0);
+            refresh_checksum(frequency);
+            require(radio_link::decode_frame(frequency).error == radio_link::DecodeError::invalid_metric,
+                    "zero frequency decoded");
+
+            auto bandwidth = radio_link::encode_frame(nominal());
+            std::fill(bandwidth.begin() + 32, bandwidth.begin() + 36, 0);
+            refresh_checksum(bandwidth);
+            require(radio_link::decode_frame(bandwidth).error == radio_link::DecodeError::invalid_metric,
+                    "zero bandwidth decoded");
+
+            auto evm = radio_link::encode_frame(nominal());
+            evm[40] = 0x03;
+            evm[41] = 0xE9;
+            refresh_checksum(evm);
+            require(radio_link::decode_frame(evm).error == radio_link::DecodeError::invalid_metric,
+                    "out-of-range EVM decoded");
         }},
         {"nominal_quality", [] {
             radio_link::LinkAnalyzer analyzer;
@@ -85,9 +120,27 @@ int main() {
             radio_link::LinkAnalyzer analyzer;
             require(analyzer.analyze(frame, 10'100).state == LinkState::rejected, "frequency not rejected");
         }},
+        {"reject_frequency_above_policy", [] {
+            auto frame = nominal(); frame.center_frequency_hz = 6'000'000'001ULL;
+            radio_link::LinkAnalyzer analyzer;
+            require(analyzer.analyze(frame, 10'100).state == LinkState::rejected,
+                    "frequency above policy not rejected");
+        }},
+        {"reject_bandwidth_above_policy", [] {
+            auto frame = nominal(); frame.bandwidth_hz = 200'000'001U;
+            radio_link::LinkAnalyzer analyzer;
+            require(analyzer.analyze(frame, 10'100).state == LinkState::rejected,
+                    "bandwidth above policy not rejected");
+        }},
         {"reject_stale_frame", [] {
             radio_link::LinkAnalyzer analyzer;
             require(analyzer.analyze(nominal(), 20'000).state == LinkState::rejected, "stale frame not rejected");
+        }},
+        {"reject_future_frame", [] {
+            auto frame = nominal(); frame.monotonic_ms = 10'101;
+            radio_link::LinkAnalyzer analyzer;
+            require(analyzer.analyze(frame, 10'100).state == LinkState::rejected,
+                    "future timestamp not rejected");
         }},
         {"detect_sequence_gap", [] {
             radio_link::LinkAnalyzer analyzer;
@@ -121,7 +174,14 @@ int main() {
         {"json_contains_diagnostics", [] {
             radio_link::LinkAnalyzer analyzer; const auto frame = nominal();
             const auto json = radio_link::to_json(frame, analyzer.analyze(frame, 10'100));
-            require(json.find("\"state\":\"nominal\"") != std::string::npos, "JSON state missing");
+            const std::vector<std::string> required_fields{
+                "\"sensor_id\":7", "\"sequence\":1", "\"center_frequency_hz\":3500000000",
+                "\"bandwidth_hz\":20000000", "\"rssi_dbm\":-70", "\"snr_db\":18",
+                "\"evm\":0.07", "\"state\":\"nominal\"", "\"missing_frames\":0",
+                "\"duplicate\":false", "\"out_of_order\":false", "\"reasons\":[\"within_policy\"]"};
+            for (const auto& field : required_fields) {
+                require(json.find(field) != std::string::npos, "JSON diagnostic field missing: " + field);
+            }
         }},
         {"udp_loopback_round_trip", [] {
             radio_link::UdpRuntime runtime;

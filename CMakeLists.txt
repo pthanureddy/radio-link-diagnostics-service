@@ -5,6 +5,7 @@ include(GNUInstallDirs)
 
 option(RADIO_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(RADIO_ENABLE_SANITIZERS "Enable address and undefined behavior sanitizers" OFF)
+option(RADIO_ENABLE_TRACEABILITY_TEST "Validate requirements-to-test traceability" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +40,15 @@ enable_testing()
 add_executable(radio_link_tests tests/radio_link_tests.cpp)
 target_link_libraries(radio_link_tests PRIVATE radio_link)
 add_test(NAME radio_link_unit_and_integration_tests COMMAND radio_link_tests)
+
+if(RADIO_ENABLE_TRACEABILITY_TEST)
+    find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
+    add_test(
+        NAME radio_link_requirements_traceability
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_traceability.py
+                --root ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 foreach(target radio_link radio_link_monitor radio_link_sender radio_link_tests)
     if(MSVC)

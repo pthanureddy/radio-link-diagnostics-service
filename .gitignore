@@ -9,3 +9,5 @@
 *.obj
 *.pdb
 *.a
+__pycache__/
+*.py[cod]

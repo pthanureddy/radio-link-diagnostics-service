@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "requirements": [
+    {
+      "id": "RLDS-SYS-001",
+      "method": "automated_unit_test",
+      "test_cases": ["frame_round_trip", "frame_size_is_fixed"]
+    },
+    {
+      "id": "RLDS-SYS-002",
+      "method": "automated_unit_test",
+      "test_cases": ["crc32_known_vector", "reject_corrupted_payload"]
+    },
+    {
+      "id": "RLDS-SYS-003",
+      "method": "automated_unit_test",
+      "test_cases": ["reject_truncated_frame", "reject_invalid_magic", "reject_unsupported_version"]
+    },
+    {
+      "id": "RLDS-SYS-004",
+      "method": "automated_unit_test",
+      "test_cases": ["reject_invalid_encode_metrics", "reject_invalid_decoded_metrics"]
+    },
+    {
+      "id": "RLDS-SYS-005",
+      "method": "automated_unit_test",
+      "test_cases": ["nominal_quality", "degraded_quality", "critical_quality"]
+    },
+    {
+      "id": "RLDS-SYS-006",
+      "method": "automated_unit_test",
+      "test_cases": ["reject_frequency_outside_policy", "reject_frequency_above_policy"]
+    },
+    {
+      "id": "RLDS-SYS-007",
+      "method": "automated_unit_test",
+      "test_cases": ["reject_bandwidth_above_policy"]
+    },
+    {
+      "id": "RLDS-SYS-008",
+      "method": "automated_unit_test",
+      "test_cases": ["reject_stale_frame", "reject_future_frame"]
+    },
+    {
+      "id": "RLDS-SYS-009",
+      "method": "automated_unit_test",
+      "test_cases": ["detect_sequence_gap"]
+    },
+    {
+      "id": "RLDS-SYS-010",
+      "method": "automated_unit_test",
+      "test_cases": ["detect_duplicate", "detect_out_of_order"]
+    },
+    {
+      "id": "RLDS-SYS-011",
+      "method": "automated_unit_test",
+      "test_cases": ["track_sensors_independently", "reset_sequence_state"]
+    },
+    {
+      "id": "RLDS-SYS-012",
+      "method": "automated_unit_test",
+      "test_cases": ["json_contains_diagnostics"]
+    },
+    {
+      "id": "RLDS-SYS-013",
+      "method": "automated_loopback_integration_test",
+      "test_cases": ["udp_loopback_round_trip"]
+    },
+    {
+      "id": "RLDS-SYS-014",
+      "method": "automated_socket_integration_test",
+      "test_cases": ["udp_timeout"]
+    },
+    {
+      "id": "RLDS-SYS-015",
+      "method": "automated_component_test",
+      "test_cases": ["reject_invalid_ipv4"]
+    }
+  ]
+}

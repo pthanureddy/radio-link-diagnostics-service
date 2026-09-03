@@ -13,6 +13,7 @@ The repository is intentionally unclassified and hardware-independent. It demons
 - Cross-platform socket code for Linux and Windows
 - Linux packaging through Docker and a hardened `systemd` unit
 - CMake, CTest, GCC, Clang, MSVC, AddressSanitizer, UndefinedBehaviorSanitizer, and GitHub Actions
+- Testable `RLDS-SYS-*` requirements with an automated requirements-to-test traceability check
 
 ## Architecture
 
@@ -26,7 +27,8 @@ The sender creates deterministic test telemetry. The monitor binds a UDP port, d
 
 ## Build and verify
 
-Requirements: CMake 3.20+, a C++20 compiler, and Ninja or another supported CMake generator.
+Requirements: CMake 3.20+, a C++20 compiler, Python 3.8+ for the
+traceability check, and Ninja or another supported CMake generator.
 
 ```bash
 cmake -S . -B build -G Ninja -DRADIO_WARNINGS_AS_ERRORS=ON
@@ -35,7 +37,15 @@ ctest --test-dir build --output-on-failure
 ./build/radio_link_tests
 ```
 
-The named test runner currently covers 22 unit and loopback integration scenarios.
+The named C++ test runner covers 26 unit and loopback integration scenarios.
+CTest also runs an automated traceability check that fails if a formal
+requirement or named test is missing from the verification matrix.
+
+To run that check directly:
+
+```bash
+python3 tools/verify_traceability.py --root .
+```
 
 ## Run locally
 
@@ -76,7 +86,11 @@ For a host installation, copy both binaries to `/usr/local/bin/` and install `de
 - The project does not connect to radios, antennas, switches, routers, classified systems, or live operational networks.
 - The protocol is project-specific and is not presented as 3GPP, ETSI, or defence-system compliance.
 
-See [protocol.md](docs/protocol.md), [architecture.md](docs/architecture.md), [security.md](docs/security.md), and [requirements-traceability.md](docs/requirements-traceability.md) for review evidence.
+See [system-requirements.md](docs/system-requirements.md),
+[verification-plan.md](docs/verification-plan.md),
+[requirements-traceability.md](docs/requirements-traceability.md),
+[protocol.md](docs/protocol.md), [architecture.md](docs/architecture.md), and
+[security.md](docs/security.md) for review evidence.
 
 ## License
 

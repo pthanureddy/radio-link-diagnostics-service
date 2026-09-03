@@ -2,7 +2,7 @@ FROM ubuntu:24.04 AS build
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
-       build-essential cmake ninja-build \
+       build-essential cmake ninja-build python3 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
