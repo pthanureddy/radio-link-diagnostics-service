@@ -1,8 +1,10 @@
 #include "radio_link/frame.hpp"
+#include "radio_link/cli_integer.hpp"
 #include "radio_link/udp_socket.hpp"
 
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -16,8 +18,10 @@ int main(int argc, char** argv) {
         for (int index = 1; index < argc; ++index) {
             const std::string argument = argv[index];
             if (argument == "--host" && index + 1 < argc) host = argv[++index];
-            else if (argument == "--port" && index + 1 < argc) port = static_cast<std::uint16_t>(std::stoi(argv[++index]));
-            else if (argument == "--count" && index + 1 < argc) count = std::stoi(argv[++index]);
+            else if (argument == "--port" && index + 1 < argc) port = static_cast<std::uint16_t>(
+                radio_link::parse_cli_integer(argv[++index], "--port", 1, 65535));
+            else if (argument == "--count" && index + 1 < argc) count = radio_link::parse_cli_integer(
+                argv[++index], "--count", 1, std::numeric_limits<int>::max());
             else if (argument == "--scenario" && index + 1 < argc) scenario = argv[++index];
             else throw std::invalid_argument("usage: radio_link_sender [--host IPv4] [--port N] [--count N] [--scenario nominal|degraded|critical]");
         }
