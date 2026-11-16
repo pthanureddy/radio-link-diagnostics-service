@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "agent/**"]
+    branches: [main, "agent/**", "codex/**"]
   pull_request:
   workflow_dispatch:
 
@@ -10,6 +10,39 @@ permissions:
   contents: read
 
 jobs:
+  java-acceptance:
+    name: Java acceptance (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary_dir: build
+          - os: windows-latest
+            binary_dir: build/Release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: java-acceptance/pom.xml
+      - name: Configure native applications
+        run: cmake -S . -B build -DRADIO_WARNINGS_AS_ERRORS=ON
+      - name: Build native applications
+        run: cmake --build build --config Release --parallel
+      - name: Java process and UDP acceptance tests
+        run: mvn -B -ntp -f java-acceptance/pom.xml "-Dradio.binary.dir=${{ github.workspace }}/${{ matrix.binary_dir }}" verify
+      - name: Preserve JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.os }}
+          path: java-acceptance/target/surefire-reports/
+          if-no-files-found: error
+
   build-test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}

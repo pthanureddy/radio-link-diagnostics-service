@@ -11,3 +11,4 @@
 *.a
 __pycache__/
 *.py[cod]
+/java-acceptance/target/

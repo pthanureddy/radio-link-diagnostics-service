@@ -1,0 +1,18 @@
+{
+  "verified_on": "2026-11-16",
+  "environment": "Windows; Zig 0.13.0 / Clang 18.1.6; CMake 4.4.4; Java 17; Maven 3.9.11",
+  "java_invocations": 37,
+  "java_failures": 0,
+  "java_errors": 0,
+  "java_skipped": 0,
+  "native_named_cases": 26,
+  "native_ctest_stages": 2,
+  "traced_native_requirements": 15,
+  "scope": "Synthetic loopback UDP and CLI acceptance only; no RF, Radio Unit hardware, 3GPP conformance, coverage percentage, or performance claim.",
+  "commands": [
+    "cmake --build build/verified --parallel 3",
+    "ctest --test-dir build/verified --output-on-failure",
+    "mvn -B -ntp -f java-acceptance/pom.xml -Dradio.binary.dir=<absolute-build-directory> verify"
+  ],
+  "setup_note": "Task-local CMake generated ranlib discovery was repaired for the existing Zig wrapper toolchain. No repository compiler flags were relaxed. Hosted CI uses its own GCC, Clang and MSVC toolchains."
+}

@@ -14,6 +14,7 @@ The repository is intentionally unclassified and hardware-independent. It demons
 - Linux packaging through Docker and a hardened `systemd` unit
 - CMake, CTest, GCC, Clang, MSVC, AddressSanitizer, UndefinedBehaviorSanitizer, and GitHub Actions
 - Testable `RLDS-SYS-*` requirements with an automated requirements-to-test traceability check
+- Java 17/JUnit 5 black-box acceptance tests of the compiled sender and monitor
 
 ## Architecture
 
@@ -47,6 +48,29 @@ To run that check directly:
 python3 tools/verify_traceability.py --root .
 ```
 
+## Java acceptance framework
+
+After building the native binaries, use JDK 17+ and Maven 3.9+:
+
+```bash
+mvn -B -ntp -f java-acceptance/pom.xml verify
+```
+
+The default binary directory is `build/`. For a multi-configuration Windows
+build or a custom build directory, pass its absolute path:
+
+```powershell
+mvn -B -ntp -f java-acceptance/pom.xml "-Dradio.binary.dir=$PWD/build/Release" verify
+```
+
+JUnit launches the real C++ processes and verifies JSON diagnostics after UDP
+fault injection. It uses loopback binding, OS-assigned ports, an explicit
+readiness event, and bounded process cleanup. There are no startup sleeps or
+mocked decoder calls. Maven writes XML and text results under
+`java-acceptance/target/surefire-reports/`. CI runs this suite on Linux and Windows
+and retains the reports. See [Java acceptance design](docs/java-acceptance.md)
+for test mapping, clock handling, failure diagnosis, and limitations.
+
 ## Run locally
 
 Terminal 1:
@@ -62,6 +86,13 @@ Terminal 2:
 ```
 
 Available synthetic sender scenarios are `nominal`, `degraded`, and `critical`. Use `--continuous` on the monitor for a long-running service.
+
+The monitor also accepts `--bind IPv4` (default `0.0.0.0`), `--port 0` to request
+an OS-assigned port, and `--announce-ready`. The last option writes
+`radio_link_monitor: ready port=<actual port>` to stderr only after binding.
+Diagnostics remain one flushed JSON object per datagram on stdout. Both CLIs
+reject malformed, overflowing, and out-of-range numeric arguments with exit
+code 2; sender ports must be 1-65535, monitor ports 0-65535, and counts positive.
 
 Example output:
 
